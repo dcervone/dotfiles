@@ -55,6 +55,9 @@ plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
+# Templates
+source $HOME/.oh-my-zsh/templates/zshrc.zsh-template
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -81,5 +84,5 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-# alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+source $HOME/.bash_aliases
