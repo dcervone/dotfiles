@@ -149,6 +149,11 @@ point reaches the beginning or end of the buffer, stop there."
          ("[^= ]\\(=\\)[^= ]"
           1 font-lock-keyword-face))))
 
+;; highlight TODOs
+(defun highlight-todos (font-lock-add-keywords nil
+             '(("\\<\\(FIXME\\|TODO\\|BUG\\):" 1 font-lock-warning-face t))))
+(add-hook 'ess-mode-hook  'highlight-todos)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
