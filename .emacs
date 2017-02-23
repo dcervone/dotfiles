@@ -1,11 +1,20 @@
 
+
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
 (package-initialize)
 (setq inhibit-startup-screen t)
+(elpy-enable)
+;; (elpy-use-ipython)
+(setq python-shell-interpreter "ipython3"
+      python-shell-interpreter-args "--simple-prompt")
 
 ; disable toolbar
 (tool-bar-mode -1)
+
+;; override "_" to "<-" in ESS
+(require 'ess-site)
+(ess-toggle-underscore nil)
 
 ; default window split is horizontal
 (setq split-height-threshold nil)
@@ -150,9 +159,9 @@ point reaches the beginning or end of the buffer, stop there."
           1 font-lock-keyword-face))))
 
 ;; highlight TODOs
-(defun highlight-todos (font-lock-add-keywords nil
-             '(("\\<\\(FIXME\\|TODO\\|BUG\\):" 1 font-lock-warning-face t))))
-(add-hook 'ess-mode-hook  'highlight-todos)
+;; (defun highlight-todos (font-lock-add-keywords nil
+;;              '(("\\<\\(FIXME\\|TODO\\|BUG\\):" 1 font-lock-warning-face t))))
+;; (add-hook 'ess-mode-hook  'highlight-todos)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -181,7 +190,7 @@ point reaches the beginning or end of the buffer, stop there."
      (ess-R-fl-keyword:%op% . t))))
  '(package-selected-packages
    (quote
-    (ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+    (ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
