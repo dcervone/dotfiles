@@ -190,7 +190,7 @@ point reaches the beginning or end of the buffer, stop there."
      (ess-R-fl-keyword:%op% . t))))
  '(package-selected-packages
    (quote
-    (ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+    (frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
