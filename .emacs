@@ -1,5 +1,3 @@
-
-
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
 (package-initialize)
@@ -71,6 +69,12 @@ Usage: (package-require 'package)"
 (global-set-key [(meta .)] 'goto-last-change)
 ; ensure that even in worst case some goto-last-change is available
 (global-set-key [(control meta .)] 'goto-last-change)
+
+;; window resizing
+(global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
+(global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
+(global-set-key (kbd "S-C-<down>") 'shrink-window)
+(global-set-key (kbd "S-C-<up>") 'enlarge-window)
 
 ; use key chords invoke commands
 (package-require 'key-chord)
@@ -158,10 +162,26 @@ point reaches the beginning or end of the buffer, stop there."
          ("[^= ]\\(=\\)[^= ]"
           1 font-lock-keyword-face))))
 
-;; highlight TODOs
-;; (defun highlight-todos (font-lock-add-keywords nil
-;;              '(("\\<\\(FIXME\\|TODO\\|BUG\\):" 1 font-lock-warning-face t))))
-;; (add-hook 'ess-mode-hook  'highlight-todos)
+;; comment keyword highligting
+(defun font-lock-comment-annotations ()
+  "Highlight a bunch of well known comment annotations.
+
+This functions should be added to the hooks of major modes for programming."
+  (font-lock-add-keywords
+   nil '(("\\<\\(FIX\\(ME\\)?\\|TODO\\|OPTIMIZE\\|HACK\\|REFACTOR\\):"
+          1 font-lock-warning-face t))))
+
+(add-hook 'prog-mode-hook 'font-lock-comment-annotations)
+
+(defun font-lock-comment-annotations-ess ()
+  "Highlight a bunch of well known comment annotations.
+
+This functions should be added to the hooks of major modes for programming."
+  (font-lock-add-keywords
+   nil '(("\\<\\(FIX\\(ME\\)?\\|TODO\\|OPTIMIZE\\|HACK\\|REFACTOR\\):"
+          1 font-lock-warning-face t))))
+
+(add-hook 'ess-mode-hook 'font-lock-comment-annotations-ess)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -197,3 +217,4 @@ point reaches the beginning or end of the buffer, stop there."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+(put 'downcase-region 'disabled nil)
