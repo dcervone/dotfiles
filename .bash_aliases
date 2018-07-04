@@ -14,6 +14,12 @@ codesync() {
   aws s3 sync $MYAWS $PUBAWS --exclude "*" --include "*.R" --include "*.py" --include "*.sh" "$@"
  }
 
+codecp() {
+  # sync U drive *.R, *.py, *.sh code only
+  aws s3 cp ~/U $MYAWS --recursive --exclude "*" --include "*.R" --include "*.py" --include "*.sh" "$@"
+  aws s3 cp $MYAWS $PUBAWS --recursive --exclude "*" --include "*.R" --include "*.py" --include "*.sh" "$@"
+ }
+
 alias Qmount='sudo mount -t cifs -o username=DanielC,uid=1001,gid=1001 //dodgercifs/public ~/Q'
 alias Umount='sudo mount -t cifs -o username=DanielC,uid=1001,gid=1001 //dodgercifs/Users_data/DanielC ~/U'
 alias Qunmount='sudo umount ~/Q'

@@ -1,5 +1,7 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "http://melpa.org/packages/")))
+                         ("melpa" . "http://melpa.org/packages/")
+			 ("melpa-stable" . "https://stable.melpa.org/packages/")
+			 ))
 (package-initialize)
 (setq inhibit-startup-screen t)
 (elpy-enable)
@@ -75,6 +77,9 @@ Usage: (package-require 'package)"
 (global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
 (global-set-key (kbd "S-C-<down>") 'shrink-window)
 (global-set-key (kbd "S-C-<up>") 'enlarge-window)
+
+;; magit
+(global-set-key (kbd "C-x g") 'magit-status)
 
 ; use key chords invoke commands
 (package-require 'key-chord)
@@ -210,7 +215,7 @@ This functions should be added to the hooks of major modes for programming."
      (ess-R-fl-keyword:%op% . t))))
  '(package-selected-packages
    (quote
-    (frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+    (magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -218,3 +223,4 @@ This functions should be added to the hooks of major modes for programming."
  ;; If there is more than one, they won't work right.
  )
 (put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
