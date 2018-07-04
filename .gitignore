@@ -1,3 +1,4 @@
+.emacs.d/*
 .emacs.d/history*
 .emacs.d/places*
 .emacs.d/ac-comphist*
