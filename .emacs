@@ -1,5 +1,6 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
 			 ("melpa-stable" . "https://stable.melpa.org/packages/")
 			 ))
 (package-initialize)
@@ -9,12 +10,19 @@
 (setq python-shell-interpreter "ipython3"
       python-shell-interpreter-args "--simple-prompt")
 
+;; reveal.js location
+(setq org-reveal-root "file:///Users/danielc/utilities/reveal.js")
+
 ; disable toolbar
 (tool-bar-mode -1)
 
 ;; override "_" to "<-" in ESS
 (require 'ess-site)
 (ess-toggle-underscore nil)
+
+;; default meta key on mac is COMMAND
+(setq mac-command-modifier 'meta)
+(setq mac-option-modifier nil)
 
 ; default window split is horizontal
 (setq split-height-threshold nil)
@@ -215,7 +223,7 @@ This functions should be added to the hooks of major modes for programming."
      (ess-R-fl-keyword:%op% . t))))
  '(package-selected-packages
    (quote
-    (magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+    (ox-reveal org magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
