@@ -1,17 +1,26 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "http://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
+                         ("melpa" . "https://melpa.org/packages/")
 			 ("melpa-stable" . "https://stable.melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
 			 ))
+
+;;; MARKDOWN
+(add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode))
+(add-to-list 'auto-mode-alist '("\\.md" . poly-markdown+r-mode))
+(setq polymode-exporter-output-file-format "%s")
+
 (package-initialize)
 (setq inhibit-startup-screen t)
 (elpy-enable)
+
 ;; (elpy-use-ipython)
-(setq python-shell-interpreter "ipython3"
-      python-shell-interpreter-args "--simple-prompt")
+(setq py-shell-name "python3")
+(setq python-shell-interpreter "/usr/local/bin/python3.6")
+(setq elpy-rpc-python-command "/usr/local/bin/python3.6")
+      ;; python-shell-interpreter-args "--simple-prompt")
 
 ;; reveal.js location
-(setq org-reveal-root "file:///Users/danielc/utilities/reveal.js")
+(setq org-reveal-root "file:///Users/dcervone/utils/reveal.js")
 
 ; disable toolbar
 (tool-bar-mode -1)
@@ -19,6 +28,53 @@
 ;; override "_" to "<-" in ESS
 (require 'ess-site)
 (ess-toggle-underscore nil)
+(setq ess-default-style 'RStudio)
+
+;; gcloud ssh
+(setq tramp-default-method "ssh")
+
+(require 'tramp)
+
+(add-to-list 'tramp-methods
+  '("gssh"
+    (tramp-login-program        "gcloud compute ssh --ssh-flag='-X' --ssh-flag='-ServerAliveInterval=100' --zone 'us-east1-b'")
+    (tramp-login-args           (("%h")))
+    (tramp-async-args           (("-q")))
+    (tramp-remote-shell         "/bin/bash")
+    (tramp-remote-shell-args    ("-c"))
+    (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
+                                 ("-o" "UserKnownHostsFile=/dev/null")
+                                 ("-o" "StrictHostKeyChecking=no")))
+    (tramp-default-port         22)))
+
+(push
+ (cons
+  "docker"
+  '((tramp-login-program "docker")
+    (tramp-login-args (("exec" "-it") ("%h") ("/bin/bash")))
+    (tramp-remote-shell "/bin/sh")
+    (tramp-remote-shell-args ("-i") ("-c"))))
+ tramp-methods)
+
+(defadvice tramp-completion-handle-file-name-all-completions
+    (around dotemacs-completion-docker activate)
+  "(tramp-completion-handle-file-name-all-completions \"\" \"/docker:\" returns
+    a list of active Docker container names, followed by colons."
+  (if (equal (ad-get-arg 1) "/docker:")
+      (let* ((dockernames-raw (shell-command-to-string "docker ps | awk '$NF != \"NAMES\" { print $NF \":\" }'"))
+             (dockernames (cl-remove-if-not
+                           #'(lambda (dockerline) (string-match ":$" dockerline))
+                           (split-string dockernames-raw "\n"))))
+        (setq ad-return-value dockernames))
+    ad-do-it))
+
+
+;; dockerfile mode
+(add-to-list 'load-path "/Users/dcervone/utils/dockerfile-mode/")
+(require 'dockerfile-mode)
+(add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+(put 'dockerfile-image-name 'safe-local-variable #'stringp)
+(setq dockerfile-mode-command "docker")
 
 ;; default meta key on mac is COMMAND
 (setq mac-command-modifier 'meta)
@@ -206,7 +262,7 @@ This functions should be added to the hooks of major modes for programming."
  '(custom-enabled-themes (quote (deeper-blue)))
  '(custom-safe-themes
    (quote
-    ("01ce486c3a7c8b37cf13f8c95ca4bb3c11413228b35676025fdf239e77019ea1" default)))
+    ("e1ef2d5b8091f4953fe17b4ca3dd143d476c106e221d92ded38614266cea3c8b" "1ed5c8b7478d505a358f578c00b58b430dde379b856fbcb60ed8d345fc95594e" "76bfa9318742342233d8b0b42e824130b3a50dcc732866ff8e47366aed69de11" "6177ecbffb8f37756012c9ee9fd73fc043520836d254397566e37c6204118852" "01ce486c3a7c8b37cf13f8c95ca4bb3c11413228b35676025fdf239e77019ea1" default)))
  '(ess-R-font-lock-keywords
    (quote
     ((ess-R-fl-keyword:modifiers . t)
@@ -221,9 +277,11 @@ This functions should be added to the hooks of major modes for programming."
      (ess-fl-keyword:= . t)
      (ess-R-fl-keyword:F&T . t)
      (ess-R-fl-keyword:%op% . t))))
+ '(flycheck-lintr-linters
+   "with_defaults(line_length_linter(120), object_name_linter = NULL)")
  '(package-selected-packages
    (quote
-    (ox-reveal org magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+    (sql-indent multiple-cursors poly-R yaml-mode doom-themes use-package stan-snippets flycheck-stan eldoc-stan company-stan stan-mode flymd pyenv-mode markdown-preview-eww markdown-preview-mode ox-reveal org magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -232,3 +290,4 @@ This functions should be added to the hooks of major modes for programming."
  )
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+

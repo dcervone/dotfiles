@@ -89,6 +89,18 @@ source $HOME/.oh-my-zsh/templates/zshrc.zsh-template
 
 # Example aliases
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-source $HOME/.ssh/myaws
 source $HOME/.bash_profile
 source $HOME/.bash_aliases
+
+export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3.6
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/dcervone/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/dcervone/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/dcervone/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/dcervone/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+
+eval "$(starship init zsh)"
