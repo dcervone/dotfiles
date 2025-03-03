@@ -3,7 +3,8 @@
 
 ZSH_DISABLE_COMPFIX="true"
 # Path to your oh-my-zsh installation.
-  export ZSH=$HOME/.oh-my-zsh
+export ZSH=$HOME/.oh-my-zsh
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
@@ -92,7 +93,10 @@ source $HOME/.oh-my-zsh/templates/zshrc.zsh-template
 source $HOME/.bash_profile
 source $HOME/.bash_aliases
 
-export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3.6
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+
+# eval "$(starship init zsh)"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/dcervone/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/dcervone/Downloads/google-cloud-sdk/path.zsh.inc'; fi
@@ -100,7 +104,43 @@ if [ -f '/Users/dcervone/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Us
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/dcervone/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/dcervone/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-# Generated for envman. Do not edit.
-[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+# show gcloud config
+autoload -Uz colors; colors
+source /Users/dcervone/utils/gcloud.zsh
+RPROMPT='%{$fg[cyan]%}($ZSH_GCLOUD_PROMPT)%{$reset_color%}'
 
-eval "$(starship init zsh)"
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/Caskroom/miniforge/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh" ]; then
+        . "/opt/homebrew/Caskroom/miniforge/base/etc/profile.d/conda.sh"
+    else
+        export PATH="/opt/homebrew/Caskroom/miniforge/base/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
+if command -v pyenv virtualenv-init 1>/dev/null 2>&1; then
+  eval "$(pyenv virtualenv-init -)"
+fi
+
+dev-tag() {
+  GIT_TIMESTAMP=$(date -u "+%Y%m%d.%H%M%S");
+  if [[ $# -eq 1 ]] ; then
+     echo "Tagging and pushing with dev-$1-$GIT_TIMESTAMP"
+     sleep 3
+     git tag dev-$1-$GIT_TIMESTAMP
+     git push origin dev-$1-$GIT_TIMESTAMP
+  else
+     echo "Error: requires exactly one argument"
+  fi
+}	
+
+

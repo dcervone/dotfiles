@@ -9,6 +9,8 @@
 (add-to-list 'auto-mode-alist '("\\.md" . poly-markdown+r-mode))
 (setq polymode-exporter-output-file-format "%s")
 
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+
 (package-initialize)
 (setq inhibit-startup-screen t)
 (elpy-enable)
@@ -37,15 +39,16 @@
 
 (add-to-list 'tramp-methods
   '("gssh"
-    (tramp-login-program        "gcloud compute ssh --ssh-flag='-X' --ssh-flag='-ServerAliveInterval=100' --zone 'us-east1-b'")
+    (tramp-login-program        "gcloud compute ssh --ssh-flag='-X' --ssh-flag='-ServerAliveInterval=100' --zone 'us-central1-a'")
     (tramp-login-args           (("%h")))
     (tramp-async-args           (("-q")))
-    (tramp-remote-shell         "/bin/bash")
+    (tramp-remote-shell         ("/bin/bash"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-gw-args              (("-o" "GlobalKnownHostsFile=/dev/null")
                                  ("-o" "UserKnownHostsFile=/dev/null")
                                  ("-o" "StrictHostKeyChecking=no")))
     (tramp-default-port         22)))
+
 
 (push
  (cons
@@ -68,6 +71,107 @@
         (setq ad-return-value dockernames))
     ad-do-it))
 
+(eval-when-compile (require 'cl-lib))
+
+(require 'tramp)
+(require 'tramp-cache)
+
+(defgroup kubernetes-tramp nil
+  "TRAMP integration for Docker containers deployed in a kubernetes cluster."
+  :prefix "kubernetes-tramp-"
+  :group 'applications
+  :link '(url-link :tag "Github" "https://github.com/gruggiero/kubernetes-tramp")
+  :link '(emacs-commentary-link :tag "Commentary" "kubernetes-tramp"))
+
+(defcustom kubernetes-tramp-kubectl-executable "kubectl"
+  "Path to kubectl executable."
+  :type 'string
+  :group 'kubernetes-tramp)
+
+;;;###autoload
+(defcustom kubernetes-tramp-kubectl-options nil
+  "List of kubectl options."
+  :type '(repeat string)
+  :group 'kubernetes-tramp)
+
+(defcustom kubernetes-tramp-use-names nil
+  "Whether use names instead of id."
+  :type 'boolean
+  :group 'kubernetes-tramp)
+
+(defcustom tramp-remote-shell-executable "bash"
+  "Default shell executable"
+  :type 'string
+  :group 'kubernetes-tramp)
+
+;;;###autoload
+(defconst kubernetes-tramp-completion-function-alist
+  '((kubernetes-tramp--parse-running-containers  ""))
+  "Default list of (FUNCTION FILE) pairs to be examined for kubectl method.")
+
+;;;###autoload
+(defconst kubernetes-tramp-method "kubectl"
+  "Method to connect docker containers.")
+
+(defun kubernetes-tramp--running-containers ()
+  "Collect kubernetes running containers.
+
+Return a list of containers names"
+  (cl-loop for line in (cdr (apply #'process-lines kubernetes-tramp-kubectl-executable (list "get" "po" )))
+           for info = (split-string line "[[:space:]]+" t)
+           collect (car info)))
+
+(defun kubernetes-tramp--parse-running-containers (&optional ignored)
+  "Return a list of (user host) tuples.
+
+TRAMP calls this function with a filename which is IGNORED.  The
+user is an empty string because the kubectl TRAMP method uses bash
+to connect to the default user containers."
+  (cl-loop for name in (kubernetes-tramp--running-containers)
+           collect (list ""  name)))
+
+;;;###autoload
+(defun kubernetes-tramp-cleanup ()
+  "Cleanup TRAMP cache for kubernetes method."
+  (interactive)
+  (let ((containers (apply 'append (kubernetes-tramp--running-containers))))
+    (maphash (lambda (key _)
+               (and (vectorp key)
+                    (string-equal kubernetes-tramp-method (tramp-file-name-method key))
+                    (not (member (tramp-file-name-host key) containers))
+                    (remhash key tramp-cache-data)))
+             tramp-cache-data))
+  (setq tramp-cache-data-changed t)
+  (if (zerop (hash-table-count tramp-cache-data))
+      (ignore-errors (delete-file tramp-persistency-file-name))
+    (tramp-dump-connection-properties)))
+
+;;;###autoload
+(defun kubernetes-tramp-add-method ()
+  "Add kubectl tramp method."
+  (add-to-list 'tramp-methods
+               `(,kubernetes-tramp-method
+                 (tramp-login-program      ,kubernetes-tramp-kubectl-executable)
+                 (tramp-login-args         (,kubernetes-tramp-kubectl-options ("exec" "-it") ("-u" "%u") ("%h") ("sh")))
+                 (tramp-remote-shell       ,tramp-remote-shell-executable)
+                 (tramp-remote-shell-args  ("-i" "-c")))))
+
+;;;###autoload
+(eval-after-load 'tramp
+  '(progn
+     (kubernetes-tramp-add-method)
+     (tramp-set-completion-function kubernetes-tramp-method kubernetes-tramp-completion-function-alist)))
+
+(provide 'kubernetes-tramp)
+
+(push
+ (cons
+  "kubectl"
+  '((tramp-login-program "kubectl")
+    (tramp-login-args (("exec" "-it") ("%h") ("-c" "model") ("--") ("/bin/bash")))
+    (tramp-remote-shell "/bin/bash")
+    (tramp-remote-shell-args ("-i" "-c"))))
+ tramp-methods)
 
 ;; dockerfile mode
 (add-to-list 'load-path "/Users/dcervone/utils/dockerfile-mode/")
@@ -259,13 +363,11 @@ This functions should be added to the hooks of major modes for programming."
  ;; If there is more than one, they won't work right.
  '(ansi-color-names-vector
    ["#2d3743" "#ff4242" "#74af68" "#dbdb95" "#34cae2" "#008b8b" "#00ede1" "#e1e1e0"])
- '(custom-enabled-themes (quote (deeper-blue)))
+ '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
-   (quote
-    ("e1ef2d5b8091f4953fe17b4ca3dd143d476c106e221d92ded38614266cea3c8b" "1ed5c8b7478d505a358f578c00b58b430dde379b856fbcb60ed8d345fc95594e" "76bfa9318742342233d8b0b42e824130b3a50dcc732866ff8e47366aed69de11" "6177ecbffb8f37756012c9ee9fd73fc043520836d254397566e37c6204118852" "01ce486c3a7c8b37cf13f8c95ca4bb3c11413228b35676025fdf239e77019ea1" default)))
+   '("ac2245d2bab0100a4dc0ff79ac03b88afc0960eedf7585e151f829ab5d36a411" "dde8c620311ea241c0b490af8e6f570fdd3b941d7bc209e55cd87884eb733b0e" "7c4cfa4eb784539d6e09ecc118428cd8125d6aa3053d8e8413f31a7293d43169" "45e76a1b1e3bd74adb03192bf8d6eea2e469a1cf6f60088b99d57f1374d77a04" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "229c5cf9c9bd4012be621d271320036c69a14758f70e60385e87880b46d60780" "1623aa627fecd5877246f48199b8e2856647c99c6acdab506173f9bb8b0a41ac" "be9645aaa8c11f76a10bcf36aaf83f54f4587ced1b9b679b55639c87404e2499" "e964832f274625fa45810c688bdbe18caa75a5e1c36b0ca5ab88924756e5667f" "f2b56244ecc6f4b952b2bcb1d7e517f1f4272876a8c873b378f5cf68e904bd59" "51956e440cec75ba7e4cff6c79f4f8c884a50b220e78e5e05145386f5b381f7b" "d71aabbbd692b54b6263bfe016607f93553ea214bc1435d17de98894a5c3a086" "1526aeed166165811eefd9a6f9176061ec3d121ba39500af2048073bea80911e" "3577ee091e1d318c49889574a31175970472f6f182a9789f1a3e9e4513641d86" "9b01a258b57067426cc3c8155330b0381ae0d8dd41d5345b5eddac69f40d409b" "fe94e2e42ccaa9714dd0f83a5aa1efeef819e22c5774115a9984293af609fce7" "e1ef2d5b8091f4953fe17b4ca3dd143d476c106e221d92ded38614266cea3c8b" "1ed5c8b7478d505a358f578c00b58b430dde379b856fbcb60ed8d345fc95594e" "76bfa9318742342233d8b0b42e824130b3a50dcc732866ff8e47366aed69de11" "6177ecbffb8f37756012c9ee9fd73fc043520836d254397566e37c6204118852" "01ce486c3a7c8b37cf13f8c95ca4bb3c11413228b35676025fdf239e77019ea1" default))
  '(ess-R-font-lock-keywords
-   (quote
-    ((ess-R-fl-keyword:modifiers . t)
+   '((ess-R-fl-keyword:modifiers . t)
      (ess-R-fl-keyword:fun-defs . t)
      (ess-R-fl-keyword:keywords . t)
      (ess-R-fl-keyword:assign-ops . t)
@@ -276,12 +378,18 @@ This functions should be added to the hooks of major modes for programming."
      (ess-fl-keyword:delimiters . t)
      (ess-fl-keyword:= . t)
      (ess-R-fl-keyword:F&T . t)
-     (ess-R-fl-keyword:%op% . t))))
+     (ess-R-fl-keyword:%op% . t)))
  '(flycheck-lintr-linters
    "with_defaults(line_length_linter(120), object_name_linter = NULL)")
+ '(jdee-db-active-breakpoint-face-colors (cons "#1B2B34" "#FAC863"))
+ '(jdee-db-requested-breakpoint-face-colors (cons "#1B2B34" "#99C794"))
+ '(jdee-db-spec-breakpoint-face-colors (cons "#1B2B34" "#A7ADBA"))
+ '(objed-cursor-color "#EC5f67")
  '(package-selected-packages
-   (quote
-    (sql-indent multiple-cursors poly-R yaml-mode doom-themes use-package stan-snippets flycheck-stan eldoc-stan company-stan stan-mode flymd pyenv-mode markdown-preview-eww markdown-preview-mode ox-reveal org magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))))
+   '(kubernetes ir-black-theme color-theme-sanityinc-tomorrow sql-indent multiple-cursors poly-R yaml-mode doom-themes use-package stan-snippets flycheck-stan eldoc-stan company-stan stan-mode flymd pyenv-mode markdown-preview-eww markdown-preview-mode ox-reveal org magit markdown-mode frame-cmds ein request websocket elpy anaconda-mode ess key-chord goto-chg flycheck auto-complete adaptive-wrap))
+ '(pdf-view-midnight-colors (cons "#D8DEE9" "#1B2B34"))
+ '(rustic-ansi-faces
+   ["#1B2B34" "#EC5f67" "#99C794" "#FAC863" "#6699CC" "#E27E8D" "#5FB3B3" "#D8DEE9"]))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
